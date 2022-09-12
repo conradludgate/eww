@@ -189,14 +189,16 @@ impl ToDiagnostic for simplexpr::eval::EvalError {
             NoVariablesAllowed(_name) => gen_diagnostic!(self.to_string()),
             UnknownVariable(name, similar) => {
                 let mut notes = Vec::new();
-                if similar.len() == 1 {
-                    notes.push(format!("Did you mean `{}`?", similar.first().unwrap()))
-                } else if similar.len() > 1 {
-                    notes.push(format!("Did you mean one of: {}?", similar.iter().map(|x| format!("`{}`", x)).join(", ")))
+                match similar.as_slice() {
+                    [] => {}
+                    [similar] => notes.push(format!("Did you mean `{similar}`?")),
+                    similar => {
+                        notes.push(format!("Did you mean one of: {}?", similar.iter().map(|x| format!("`{x}`")).join(", ")))
+                    }
                 }
                 // TODO the note here is confusing when it's an unknown variable being used _within_ a string literal / simplexpr
                 // it only really makes sense on top-level symbols
-                notes.push(format!("Hint: If you meant to use the literal value \"{}\", surround the value in quotes", name));
+                notes.push(format!("Hint: If you meant to use the literal value \"{name}\", surround the value in quotes"));
                 gen_diagnostic!(self.to_string()).with_notes(notes)
             }
             Spanned(span, error) => error.as_ref().to_diagnostic().with_label(span_to_primary_label(*span)),

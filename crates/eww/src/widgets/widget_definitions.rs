@@ -960,7 +960,7 @@ const WIDGET_NAME_TRANSFORM: &str = "transform";
 /// @desc A widget that applies transformations to its content. They are applied in the following
 /// order: rotate->translate->scale)
 fn build_transform(bargs: &mut BuilderArgs) -> Result<Transform> {
-    let w = Transform::new();
+    let w = Transform::default();
     def_widget!(bargs, _g, w, {
         // @prop rotate - the percentage to rotate
         prop(rotate: as_f64) { w.set_property("rotate", rotate); },
@@ -980,7 +980,7 @@ const WIDGET_NAME_CIRCULAR_PROGRESS: &str = "circular-progress";
 /// @widget circular-progress
 /// @desc A widget that displays a circular progress bar
 fn build_circular_progress_bar(bargs: &mut BuilderArgs) -> Result<CircProg> {
-    let w = CircProg::new();
+    let w = CircProg::default();
     def_widget!(bargs, _g, w, {
         // @prop value - the value, between 0 - 100
         prop(value: as_f64) { w.set_property("value", value); },
@@ -998,7 +998,7 @@ const WIDGET_NAME_GRAPH: &str = "graph";
 /// @widget graph
 /// @desc A widget that displays a graph showing how a given value changes over time
 fn build_graph(bargs: &mut BuilderArgs) -> Result<super::graph::Graph> {
-    let w = super::graph::Graph::new();
+    let w = super::graph::Graph::default();
     def_widget!(bargs, _g, w, {
         // @prop value - the value, between 0 - 100
         prop(value: as_f64) { w.set_property("value", &value); },

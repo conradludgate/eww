@@ -175,8 +175,8 @@ impl ObjectSubclass for GraphPriv {
     }
 }
 
-impl Graph {
-    pub fn new() -> Self {
+impl Default for Graph {
+    fn default() -> Self {
         glib::Object::new::<Self>(&[]).expect("Failed to create Graph Widget")
     }
 }
