@@ -10,7 +10,7 @@ use super::window_definition::EnumParseError;
 use eww_shared_util::Span;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, smart_default::SmartDefault, Serialize, Deserialize, strum::Display)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Default, Serialize, Deserialize, strum::Display)]
 pub enum AnchorAlignment {
     #[strum(serialize = "start")]
     #[default]

@@ -2233,7 +2233,6 @@ dependencies = [
  "serde",
  "serde_json",
  "simplexpr",
- "smart-default",
  "static_assertions",
  "strum",
  "thiserror",

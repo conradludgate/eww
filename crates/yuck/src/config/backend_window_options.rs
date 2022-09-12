@@ -41,7 +41,7 @@ mod backend {
         }
     }
 
-    #[derive(Debug, Clone, PartialEq, Eq, smart_default::SmartDefault, serde::Serialize)]
+    #[derive(Debug, Clone, PartialEq, Eq, Default, serde::Serialize)]
     pub enum WindowType {
         #[default]
         Dock,
@@ -68,7 +68,7 @@ mod backend {
         }
     }
 
-    #[derive(Debug, Clone, Copy, Eq, PartialEq, smart_default::SmartDefault, serde::Serialize)]
+    #[derive(Debug, Clone, Copy, Eq, PartialEq, Default, serde::Serialize)]
     pub enum Side {
         #[default]
         Top,
