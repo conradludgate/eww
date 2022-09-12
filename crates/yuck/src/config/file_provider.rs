@@ -1,12 +1,6 @@
-
-
-
 use eww_shared_util::Span;
 
-use crate::{
-    error::{DiagError},
-    parser::ast::Ast,
-};
+use crate::{error::DiagError, parser::ast::Ast};
 
 #[derive(thiserror::Error, Debug)]
 pub enum FilesError {

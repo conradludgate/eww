@@ -1,10 +1,6 @@
 use eww_shared_util::{AttrName, Span};
 
-use crate::{
-    format_diagnostic::ToDiagnostic,
-    gen_diagnostic,
-    parser::ast::AstType,
-};
+use crate::{format_diagnostic::ToDiagnostic, gen_diagnostic, parser::ast::AstType};
 
 /// Error type representing errors that occur when trying to access parts of the AST specifically
 #[derive(Debug, thiserror::Error)]

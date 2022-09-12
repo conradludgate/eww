@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use anyhow::{Result};
+use anyhow::Result;
 
 use crate::{
     enum_parse,
@@ -16,9 +16,7 @@ pub use backend::*;
 
 #[cfg(feature = "x11")]
 mod backend {
-    use crate::{
-        error::{DiagError, DiagResultExt},
-    };
+    use crate::error::{DiagError, DiagResultExt};
 
     use super::*;
 

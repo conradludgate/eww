@@ -1,14 +1,11 @@
 use itertools::Itertools;
-use simplexpr::{ast::SimplExpr};
-
+use simplexpr::ast::SimplExpr;
 
 use eww_shared_util::{Span, Spanned, VarName};
 use std::fmt::Display;
 
-use super::{ast_iterator::AstIterator};
-use crate::{
-    ast_error::AstError,
-};
+use super::ast_iterator::AstIterator;
+use crate::ast_error::AstError;
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum AstType {

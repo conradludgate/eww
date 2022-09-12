@@ -2,13 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use simplexpr::SimplExpr;
 
-
-
-use super::{
-    widget_definition::WidgetDefinition,
-    widget_use::{WidgetUse},
-    Config,
-};
+use super::{widget_definition::WidgetDefinition, widget_use::WidgetUse, Config};
 use eww_shared_util::{AttrName, Span, Spanned, VarName};
 
 #[derive(Debug, thiserror::Error)]

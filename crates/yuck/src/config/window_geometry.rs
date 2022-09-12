@@ -1,21 +1,13 @@
-
-
-
-
 use crate::{
     enum_parse,
-    error::{DiagResult},
+    error::DiagResult,
     format_diagnostic::ToDiagnostic,
-    parser::{
-        ast::Ast,
-        ast_iterator::AstIterator,
-        from_ast::{FromAstElementContent},
-    },
+    parser::{ast::Ast, ast_iterator::AstIterator, from_ast::FromAstElementContent},
     value::Coords,
 };
 
-use super::{window_definition::EnumParseError};
-use eww_shared_util::{Span};
+use super::window_definition::EnumParseError;
+use eww_shared_util::Span;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, smart_default::SmartDefault, Serialize, Deserialize, strum::Display)]

@@ -1,12 +1,7 @@
-
 use simplexpr::{ast::SimplExpr, dynval::DynVal};
 use std::collections::HashMap;
 
-
-
-use super::{
-    ast::{Ast, AstType},
-};
+use super::ast::{Ast, AstType};
 use crate::{
     ast_error::AstError,
     config::attributes::{AttrEntry, Attributes},

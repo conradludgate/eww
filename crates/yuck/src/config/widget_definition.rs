@@ -1,10 +1,6 @@
-
-
-
-
 use crate::{
     error::{DiagError, DiagResult, DiagResultExt},
-    format_diagnostic::{ToDiagnostic},
+    format_diagnostic::ToDiagnostic,
     gen_diagnostic,
     parser::{
         ast::Ast,

@@ -1,10 +1,8 @@
 use crate::{
     format_diagnostic::{lalrpop_error_to_diagnostic, DiagnosticExt, ToDiagnostic},
-    parser::{
-        lexer, parse_error,
-    },
+    parser::{lexer, parse_error},
 };
-use codespan_reporting::{diagnostic};
+use codespan_reporting::diagnostic;
 use eww_shared_util::{Span, Spanned};
 use simplexpr::dynval;
 use thiserror::Error;

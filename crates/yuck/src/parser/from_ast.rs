@@ -1,12 +1,8 @@
-use super::{
-    ast::{Ast},
-    ast_iterator::AstIterator,
-};
+use super::{ast::Ast, ast_iterator::AstIterator};
 use crate::{error::*, format_diagnostic::ToDiagnostic, gen_diagnostic};
 use eww_shared_util::{Span, Spanned};
 
-use simplexpr::{ast::SimplExpr};
-
+use simplexpr::ast::SimplExpr;
 
 pub trait FromAst: Sized {
     fn from_ast(e: Ast) -> DiagResult<Self>;

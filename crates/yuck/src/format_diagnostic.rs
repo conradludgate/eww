@@ -1,12 +1,10 @@
-use codespan_reporting::{diagnostic};
+use codespan_reporting::diagnostic;
 use itertools::Itertools;
 use simplexpr::dynval;
 
 use diagnostic::*;
 
-use crate::{
-    config::{attributes::AttrError, validate::ValidationError},
-};
+use crate::config::{attributes::AttrError, validate::ValidationError};
 
 use super::parser::parse_error;
 use eww_shared_util::{Span, Spanned};

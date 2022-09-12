@@ -6,10 +6,6 @@ use crate::gen_diagnostic;
 use super::error::{DiagError, DiagResult};
 use ast::Ast;
 
-
-
-
-
 pub mod ast;
 pub mod ast_iterator;
 pub mod from_ast;

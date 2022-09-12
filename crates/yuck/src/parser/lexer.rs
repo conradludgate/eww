@@ -1,7 +1,6 @@
 use once_cell::sync::Lazy;
 use regex::{Regex, RegexSet};
 
-
 use super::parse_error;
 use eww_shared_util::{Span, Spanned};
 

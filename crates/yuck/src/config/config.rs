@@ -3,9 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-
 use itertools::Itertools;
-
 
 use super::{
     file_provider::{FilesError, YuckFileProvider},

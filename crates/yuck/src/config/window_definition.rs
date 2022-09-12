@@ -1,6 +1,4 @@
-use std::{fmt::Display};
-
-
+use std::fmt::Display;
 
 use crate::{
     config::monitor::MonitorIdentifier,
@@ -11,7 +9,7 @@ use crate::{
         from_ast::{FromAst, FromAstElementContent},
     },
 };
-use eww_shared_util::{Span};
+use eww_shared_util::Span;
 
 use super::{backend_window_options::BackendWindowOptions, widget_use::WidgetUse, window_geometry::WindowGeometry};
 
