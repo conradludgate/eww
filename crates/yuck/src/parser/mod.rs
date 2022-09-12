@@ -6,9 +6,9 @@ use crate::gen_diagnostic;
 use super::error::{DiagError, DiagResult};
 use ast::Ast;
 
-use std::{fmt::Display, ops::Deref};
 
-use itertools::Itertools;
+
+
 
 pub mod ast;
 pub mod ast_iterator;
@@ -43,7 +43,7 @@ pub fn require_single_toplevel(span: Span, mut asts: Vec<Ast>) -> DiagResult<Ast
             msg = "Expected exactly one element, but got none",
             label = span
         })),
-        n => Err(DiagError(gen_diagnostic! {
+        _n => Err(DiagError(gen_diagnostic! {
             msg = "Expected exactly one element, but but got {n}",
             label = asts.get(1).unwrap().span().to(asts.last().unwrap().span()) => "these elements must not be here",
             note = "Consider wrapping the elements in some container element",

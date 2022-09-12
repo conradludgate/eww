@@ -1,9 +1,9 @@
 use once_cell::sync::Lazy;
 use regex::{Regex, RegexSet};
-use simplexpr::parser::lexer::{STR_INTERPOLATION_END, STR_INTERPOLATION_START};
+
 
 use super::parse_error;
-use eww_shared_util::{AttrName, Span, Spanned, VarName};
+use eww_shared_util::{Span, Spanned};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Token {
@@ -63,9 +63,9 @@ regex_rules! {
     r"\]" => |_| Token::RBrack,
     r"true"  => |_| Token::True,
     r"false" => |_| Token::False,
-    r#"[+-]?(?:[0-9]+[.])?[0-9]+"# => |x| Token::NumLit(x),
-    r#":[^\s\)\]}]+"# => |x| Token::Keyword(x),
-    r#"[a-zA-Z_!\?<>/\.\*-\+\-][^\s{}\(\)\[\](){}]*"# => |x| Token::Symbol(x),
+    r#"[+-]?(?:[0-9]+[.])?[0-9]+"# => Token::NumLit,
+    r#":[^\s\)\]}]+"# => Token::Keyword,
+    r#"[a-zA-Z_!\?<>/\.\*-\+\-][^\s{}\(\)\[\](){}]*"# => Token::Symbol,
     r#";.*"# => |_| Token::Comment,
     r"[ \t\n\f]+" => |_| Token::Skip
 }

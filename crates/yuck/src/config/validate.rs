@@ -2,14 +2,11 @@ use std::collections::{HashMap, HashSet};
 
 use simplexpr::SimplExpr;
 
-use crate::{
-    error::DiagResult,
-    parser::{ast::Ast, ast_iterator::AstIterator, from_ast::FromAst},
-};
+
 
 use super::{
     widget_definition::WidgetDefinition,
-    widget_use::{BasicWidgetUse, WidgetUse},
+    widget_use::{WidgetUse},
     Config,
 };
 use eww_shared_util::{AttrName, Span, Spanned, VarName};
@@ -93,7 +90,7 @@ pub fn validate_variables_in_widget_use(
         }
         let values = widget.attrs.attrs.values();
         let unknown_var = values.filter_map(|value| value.value.as_simplexpr().ok()).find_map(|expr: SimplExpr| {
-            let span = expr.span();
+            let _span = expr.span();
             expr.var_refs_with_span()
                 .iter()
                 .cloned()
@@ -105,7 +102,7 @@ pub fn validate_variables_in_widget_use(
         }
 
         for child in widget.children.iter() {
-            let _ = validate_variables_in_widget_use(defs, variables, child, is_in_definition)?;
+            validate_variables_in_widget_use(defs, variables, child, is_in_definition)?;
         }
     } else if let WidgetUse::Loop(widget) = widget {
         let unknown_var = widget
@@ -120,7 +117,7 @@ pub fn validate_variables_in_widget_use(
         }
         let mut variables = variables.clone();
         variables.insert(widget.element_name.clone());
-        let _ = validate_variables_in_widget_use(defs, &variables, &widget.body, is_in_definition)?;
+        validate_variables_in_widget_use(defs, &variables, &widget.body, is_in_definition)?;
     }
 
     Ok(())

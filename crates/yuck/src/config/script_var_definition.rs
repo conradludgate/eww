@@ -60,8 +60,8 @@ pub struct PollScriptVar {
 impl FromAstElementContent for PollScriptVar {
     const ELEMENT_NAME: &'static str = "defpoll";
 
-    fn from_tail<I: Iterator<Item = Ast>>(span: Span, mut iter: AstIterator<I>) -> DiagResult<Self> {
-        fn inner<I: Iterator<Item = Ast>>(span: Span, mut iter: AstIterator<I>) -> DiagResult<PollScriptVar> {
+    fn from_tail<I: Iterator<Item = Ast>>(span: Span, iter: AstIterator<I>) -> DiagResult<Self> {
+        fn inner<I: Iterator<Item = Ast>>(_span: Span, mut iter: AstIterator<I>) -> DiagResult<PollScriptVar> {
             let (name_span, name) = iter.expect_symbol()?;
             let mut attrs = iter.expect_key_values()?;
             let initial_value = Some(attrs.primitive_optional("initial")?.unwrap_or_else(|| DynVal::from_string(String::new())));
@@ -97,8 +97,8 @@ pub struct ListenScriptVar {
 impl FromAstElementContent for ListenScriptVar {
     const ELEMENT_NAME: &'static str = "deflisten";
 
-    fn from_tail<I: Iterator<Item = Ast>>(span: Span, mut iter: AstIterator<I>) -> DiagResult<Self> {
-        fn inner<I: Iterator<Item = Ast>>(span: Span, mut iter: AstIterator<I>) -> DiagResult<ListenScriptVar> {
+    fn from_tail<I: Iterator<Item = Ast>>(span: Span, iter: AstIterator<I>) -> DiagResult<Self> {
+        fn inner<I: Iterator<Item = Ast>>(_span: Span, mut iter: AstIterator<I>) -> DiagResult<ListenScriptVar> {
             let (name_span, name) = iter.expect_symbol()?;
             let mut attrs = iter.expect_key_values()?;
             let initial_value = attrs.primitive_optional("initial")?.unwrap_or_else(|| DynVal::from_string(String::new()));

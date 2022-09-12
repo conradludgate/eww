@@ -1,10 +1,9 @@
 use std::{
     collections::HashMap,
-    convert::{TryFrom, TryInto},
 };
 
 use simplexpr::{
-    dynval::{DynVal, FromDynVal},
+    dynval::{FromDynVal},
     eval::EvalError,
     SimplExpr,
 };
@@ -13,7 +12,7 @@ use crate::{
     error::DiagError,
     parser::{ast::Ast, from_ast::FromAst},
 };
-use eww_shared_util::{AttrName, Span, Spanned, VarName};
+use eww_shared_util::{AttrName, Span, Spanned};
 
 #[derive(Debug, thiserror::Error)]
 pub enum AttrError {
@@ -64,14 +63,14 @@ impl Attributes {
     pub fn ast_required<T: FromAst>(&mut self, key: &str) -> Result<T, DiagError> {
         let key = AttrName(key.to_string());
         match self.attrs.remove(&key) {
-            Some(AttrEntry { key_span, value }) => T::from_ast(value),
+            Some(AttrEntry { key_span: _, value }) => T::from_ast(value),
             None => Err(AttrError::MissingRequiredAttr(self.span, key.clone()).into()),
         }
     }
 
     pub fn ast_optional<T: FromAst>(&mut self, key: &str) -> Result<Option<T>, DiagError> {
         match self.attrs.remove(&AttrName(key.to_string())) {
-            Some(AttrEntry { key_span, value }) => T::from_ast(value).map(Some),
+            Some(AttrEntry { key_span: _, value }) => T::from_ast(value).map(Some),
             None => Ok(None),
         }
     }

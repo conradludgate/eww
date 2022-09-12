@@ -1,7 +1,6 @@
 use eww_shared_util::{AttrName, Span};
 
 use crate::{
-    error::{DiagError, DiagResult},
     format_diagnostic::ToDiagnostic,
     gen_diagnostic,
     parser::ast::AstType,
@@ -40,7 +39,7 @@ impl ToDiagnostic for AstError {
                 label = span => format!("Expected a `{expected}` here"),
                 note = format!("Expected: {expected}\n     Got: {actual}"),
             },
-            AstError::DanglingKeyword(span, kw) => gen_diagnostic! {
+            AstError::DanglingKeyword(span, _kw) => gen_diagnostic! {
                 msg = "{kw} is missing a value",
                 label = span => "No value provided for this",
             },
