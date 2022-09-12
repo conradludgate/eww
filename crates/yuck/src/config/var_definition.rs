@@ -1,16 +1,10 @@
-use std::collections::HashMap;
-
-use simplexpr::{dynval::DynVal, SimplExpr};
+use simplexpr::dynval::DynVal;
 
 use crate::{
     error::{DiagResult, DiagResultExt},
-    parser::{
-        ast::Ast,
-        ast_iterator::AstIterator,
-        from_ast::{FromAst, FromAstElementContent},
-    },
+    parser::{ast::Ast, ast_iterator::AstIterator, from_ast::FromAstElementContent},
 };
-use eww_shared_util::{AttrName, Span, VarName};
+use eww_shared_util::{Span, VarName};
 
 #[derive(Debug, PartialEq, Eq, Clone, serde::Serialize)]
 pub struct VarDefinition {
@@ -22,13 +16,13 @@ pub struct VarDefinition {
 impl FromAstElementContent for VarDefinition {
     const ELEMENT_NAME: &'static str = "defvar";
 
-    fn from_tail<I: Iterator<Item = Ast>>(span: Span, mut iter: AstIterator<I>) -> DiagResult<Self> {
-        let result: DiagResult<_> = try {
+    fn from_tail<I: Iterator<Item = Ast>>(span: Span, iter: AstIterator<I>) -> DiagResult<Self> {
+        fn inner<I: Iterator<Item = Ast>>(span: Span, mut iter: AstIterator<I>) -> DiagResult<VarDefinition> {
             let (_, name) = iter.expect_symbol()?;
             let (_, initial_value) = iter.expect_literal()?;
             iter.expect_done()?;
-            Self { name: VarName(name), initial_value, span }
-        };
-        result.note(r#"Expected format: `(defvar name "initial-value")`"#)
+            Ok(VarDefinition { name: VarName(name), initial_value, span })
+        }
+        inner(span, iter).note(r#"Expected format: `(defvar name "initial-value")`"#)
     }
 }

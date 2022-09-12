@@ -7,7 +7,7 @@ use crate::{
 use eww_shared_util::{Span, Spanned, VarName};
 use std::{
     collections::HashMap,
-    convert::{TryFrom, TryInto},
+    convert::{Infallible, TryFrom, TryInto},
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -69,13 +69,13 @@ impl SimplExpr {
     pub fn try_map_var_refs<E, F: Fn(Span, VarName) -> Result<SimplExpr, E> + Copy>(self, f: F) -> Result<Self, E> {
         use SimplExpr::*;
         Ok(match self {
-            BinOp(span, box a, op, box b) => BinOp(span, box a.try_map_var_refs(f)?, op, box b.try_map_var_refs(f)?),
+            BinOp(span, a, op, b) => BinOp(span, Box::new(a.try_map_var_refs(f)?), op, Box::new(b.try_map_var_refs(f)?)),
             Concat(span, elems) => Concat(span, elems.into_iter().map(|x| x.try_map_var_refs(f)).collect::<Result<_, _>>()?),
-            UnaryOp(span, op, box a) => UnaryOp(span, op, box a.try_map_var_refs(f)?),
-            IfElse(span, box a, box b, box c) => {
-                IfElse(span, box a.try_map_var_refs(f)?, box b.try_map_var_refs(f)?, box c.try_map_var_refs(f)?)
+            UnaryOp(span, op, a) => UnaryOp(span, op, Box::new(a.try_map_var_refs(f)?)),
+            IfElse(span, a, b, c) => {
+                IfElse(span, Box::new(a.try_map_var_refs(f)?), Box::new(b.try_map_var_refs(f)?), Box::new(c.try_map_var_refs(f)?))
             }
-            JsonAccess(span, box a, box b) => JsonAccess(span, box a.try_map_var_refs(f)?, box b.try_map_var_refs(f)?),
+            JsonAccess(span, a, b) => JsonAccess(span, Box::new(a.try_map_var_refs(f)?), Box::new(b.try_map_var_refs(f)?)),
             FunctionCall(span, name, args) => {
                 FunctionCall(span, name, args.into_iter().map(|x| x.try_map_var_refs(f)).collect::<Result<_, _>>()?)
             }
@@ -95,14 +95,14 @@ impl SimplExpr {
     }
 
     pub fn map_var_refs(self, f: impl Fn(Span, VarName) -> SimplExpr) -> Self {
-        self.try_map_var_refs(|span, var| Ok::<_, !>(f(span, var))).into_ok()
+        self.try_map_var_refs(|span, var| Ok::<_, Infallible>(f(span, var))).unwrap()
     }
 
     /// resolve partially.
     /// If a var-ref links to another var-ref, that other var-ref is used.
     /// If a referenced variable is not found in the given hashmap, returns the var-ref unchanged.
     pub fn resolve_one_level(self, variables: &HashMap<VarName, SimplExpr>) -> Self {
-        self.map_var_refs(|span, name| variables.get(&name).cloned().unwrap_or_else(|| Self::VarRef(span, name)))
+        self.map_var_refs(|span, name| variables.get(&name).cloned().unwrap_or(Self::VarRef(span, name)))
     }
 
     /// resolve variable references in the expression. Fails if a variable cannot be resolved.
@@ -124,13 +124,13 @@ impl SimplExpr {
             Literal(..) => Vec::new(),
             VarRef(span, name) => vec![(*span, name)],
             Concat(_, elems) => elems.iter().flat_map(|x| x.var_refs_with_span().into_iter()).collect(),
-            BinOp(_, box a, _, box b) | JsonAccess(_, box a, box b) => {
+            BinOp(_, a, _, b) | JsonAccess(_, a, b) => {
                 let mut refs = a.var_refs_with_span();
                 refs.extend(b.var_refs_with_span().iter());
                 refs
             }
-            UnaryOp(_, _, box x) => x.var_refs_with_span(),
-            IfElse(_, box a, box b, box c) => {
+            UnaryOp(_, _, x) => x.var_refs_with_span(),
+            IfElse(_, a, b, c) => {
                 let mut refs = a.var_refs_with_span();
                 refs.extend(b.var_refs_with_span().iter());
                 refs.extend(c.var_refs_with_span().iter());
@@ -283,7 +283,7 @@ fn call_expr_function(name: &str, args: Vec<DynVal>) -> Result<DynVal, EvalError
                 let string = string.as_string()?;
                 let pattern = regex::Regex::new(&pattern.as_string()?)?;
                 let replacement = replacement.as_string()?;
-                Ok(DynVal::from(pattern.replace_all(&string, replacement.replace("$", "$$").replace("\\", "$")).into_owned()))
+                Ok(DynVal::from(pattern.replace_all(&string, replacement.replace('$', "$$").replace('\\', "$")).into_owned()))
             }
             _ => Err(EvalError::WrongArgCount(name.to_string())),
         },

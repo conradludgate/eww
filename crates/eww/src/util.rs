@@ -5,7 +5,17 @@ use std::fmt::Write;
 #[macro_export]
 macro_rules! try_logging_errors {
     ($context:expr => $code:block) => {{
-        let result: Result<_> = try { $code };
+        let result: Result<_> = (|| Ok($code))();
+        if let Err(err) = result {
+            log::error!("[{}:{}] Error while {}: {:?}", ::std::file!(), ::std::line!(), $context, err);
+        }
+    }};
+}
+
+#[macro_export]
+macro_rules! try_logging_errors_async {
+    ($context:expr => $code:block) => {{
+        let result: Result<_> = async { Ok($code) }.await;
         if let Err(err) = result {
             log::error!("[{}:{}] Error while {}: {:?}", ::std::file!(), ::std::line!(), $context, err);
         }

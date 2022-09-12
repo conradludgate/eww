@@ -33,7 +33,7 @@ pub fn init(evt_send: UnboundedSender<DaemonCommand>) -> ScriptVarHandlerHandle 
                 .build()
                 .expect("Failed to initialize tokio runtime for script var handlers");
             rt.block_on(async {
-                let _: Result<_> = try {
+                let _: Result<_> = async {
                     let mut handler = ScriptVarHandler {
                         listen_handler: ListenVarHandler::new(evt_send.clone())?,
                         poll_handler: PollVarHandler::new(evt_send)?,
@@ -53,7 +53,9 @@ pub fn init(evt_send: UnboundedSender<DaemonCommand>) -> ScriptVarHandlerHandle 
                         },
                         else => break,
                     };
-                };
+                    Ok(())
+                }
+                .await;
             })
         })
         .expect("Failed to start script-var-handler thread");
@@ -158,9 +160,9 @@ impl PollVarHandler {
         self.poll_handles.insert(var.name.clone(), cancellation_token.clone());
         let evt_send = self.evt_send.clone();
         tokio::spawn(async move {
-            let result: Result<_> = try {
-                evt_send.send(app::DaemonCommand::UpdateVars(vec![(var.name.clone(), run_poll_once(&var)?)]))?;
-            };
+            let result: Result<_> =
+                async { Ok(evt_send.send(app::DaemonCommand::UpdateVars(vec![(var.name.clone(), run_poll_once(&var)?)]))?) }
+                    .await;
             if let Err(err) = result {
                 crate::error_handling_ctx::print_error(err);
             }
@@ -168,9 +170,9 @@ impl PollVarHandler {
             crate::loop_select_exiting! {
                 _ = cancellation_token.cancelled() => break,
                 _ = tokio::time::sleep(var.interval) => {
-                    let result: Result<_> = try {
-                        evt_send.send(app::DaemonCommand::UpdateVars(vec![(var.name.clone(), run_poll_once(&var)?)]))?;
-                    };
+                    let result: Result<_> = async {
+                        Ok(evt_send.send(app::DaemonCommand::UpdateVars(vec![(var.name.clone(),run_poll_once(&var)?)]))?)
+                    }.await;
 
                     if let Err(err) = result {
                         crate::error_handling_ctx::print_error(err);
@@ -233,7 +235,7 @@ impl ListenVarHandler {
 
         let evt_send = self.evt_send.clone();
         tokio::spawn(async move {
-            crate::try_logging_errors!(format!("Executing listen var-command {}", &var.command) =>  {
+            crate::try_logging_errors_async!(format!("Executing listen var-command {}", &var.command) =>  {
                 let mut handle = unsafe {
                     tokio::process::Command::new("sh")
                     .args(&["-c", &var.command])

@@ -1,17 +1,11 @@
-use std::collections::HashMap;
-
 use simplexpr::{dynval::DynVal, SimplExpr};
 
 use crate::{
     error::{DiagError, DiagResult, DiagResultExt},
     format_diagnostic::ToDiagnostic,
-    parser::{
-        ast::Ast,
-        ast_iterator::AstIterator,
-        from_ast::{FromAst, FromAstElementContent},
-    },
+    parser::{ast::Ast, ast_iterator::AstIterator, from_ast::FromAstElementContent},
 };
-use eww_shared_util::{AttrName, Span, Spanned, VarName};
+use eww_shared_util::{Span, VarName};
 
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize)]
 pub enum ScriptVarDefinition {
@@ -67,7 +61,7 @@ impl FromAstElementContent for PollScriptVar {
     const ELEMENT_NAME: &'static str = "defpoll";
 
     fn from_tail<I: Iterator<Item = Ast>>(span: Span, mut iter: AstIterator<I>) -> DiagResult<Self> {
-        let result: DiagResult<_> = try {
+        fn inner<I: Iterator<Item = Ast>>(span: Span, mut iter: AstIterator<I>) -> DiagResult<PollScriptVar> {
             let (name_span, name) = iter.expect_symbol()?;
             let mut attrs = iter.expect_key_values()?;
             let initial_value = Some(attrs.primitive_optional("initial")?.unwrap_or_else(|| DynVal::from_string(String::new())));
@@ -79,16 +73,16 @@ impl FromAstElementContent for PollScriptVar {
                 attrs.ast_optional::<SimplExpr>("run-while")?.unwrap_or_else(|| SimplExpr::Literal(DynVal::from(true)));
 
             iter.expect_done()?;
-            Self {
+            Ok(PollScriptVar {
                 name_span,
                 name: VarName(name),
                 run_while_expr,
                 command: VarSource::Shell(script_span, script.to_string()),
                 initial_value,
                 interval,
-            }
-        };
-        result.note(r#"Expected format: `(defpoll name :interval "10s" "echo 'a shell script'")`"#)
+            })
+        }
+        inner(span, iter).note(r#"Expected format: `(defpoll name :interval "10s" "echo 'a shell script'")`"#)
     }
 }
 
@@ -104,14 +98,14 @@ impl FromAstElementContent for ListenScriptVar {
     const ELEMENT_NAME: &'static str = "deflisten";
 
     fn from_tail<I: Iterator<Item = Ast>>(span: Span, mut iter: AstIterator<I>) -> DiagResult<Self> {
-        let result: DiagResult<_> = try {
+        fn inner<I: Iterator<Item = Ast>>(span: Span, mut iter: AstIterator<I>) -> DiagResult<ListenScriptVar> {
             let (name_span, name) = iter.expect_symbol()?;
             let mut attrs = iter.expect_key_values()?;
             let initial_value = attrs.primitive_optional("initial")?.unwrap_or_else(|| DynVal::from_string(String::new()));
             let (command_span, script) = iter.expect_literal()?;
             iter.expect_done()?;
-            Self { name_span, name: VarName(name), command: script.to_string(), initial_value, command_span }
-        };
-        result.note(r#"Expected format: `(deflisten name :initial "0" "tail -f /tmp/example")`"#)
+            Ok(ListenScriptVar { name_span, name: VarName(name), command: script.to_string(), initial_value, command_span })
+        }
+        inner(span, iter).note(r#"Expected format: `(deflisten name :initial "0" "tail -f /tmp/example")`"#)
     }
 }

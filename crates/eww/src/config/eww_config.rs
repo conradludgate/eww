@@ -61,7 +61,7 @@ impl EwwConfig {
             .into_iter()
             .chain(inbuilt::MAGIC_CONSTANT_NAMES)
             .into_iter()
-            .map(|x| VarName::from(x.clone()))
+            .map(|&x| VarName::from(x))
             .collect();
         yuck::config::validate::validate(&config, magic_globals)?;
 

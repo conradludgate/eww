@@ -1,5 +1,3 @@
-use std::str::pattern::Pattern;
-
 use eww_shared_util::{Span, Spanned};
 use once_cell::sync::Lazy;
 use regex::{Regex, RegexSet};
@@ -109,8 +107,8 @@ regex_rules! {
     r"\s+" => |_| Token::Skip,
     r";.*"=> |_| Token::Comment,
 
-    r"[a-zA-Z_][a-zA-Z0-9_-]*" => |x| Token::Ident(x),
-    r"[+-]?(?:[0-9]+[.])?[0-9]+" => |x| Token::NumLit(x)
+    r"[a-zA-Z_][a-zA-Z0-9_-]*" => Token::Ident,
+    r"[+-]?(?:[0-9]+[.])?[0-9]+" => Token::NumLit
 }
 
 #[derive(Debug)]
@@ -129,10 +127,6 @@ impl<'s> Lexer<'s> {
 
     fn remaining(&self) -> &'s str {
         &self.source[self.pos..]
-    }
-
-    pub fn continues_with(&self, pat: impl Pattern<'s>) -> bool {
-        self.remaining().starts_with(pat)
     }
 
     pub fn next_token(&mut self) -> Option<Result<Sp<Token>, LexicalError>> {

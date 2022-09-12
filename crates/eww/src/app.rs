@@ -131,7 +131,7 @@ impl App {
     /// Handle a [`DaemonCommand`] event.
     pub fn handle_command(&mut self, event: DaemonCommand) {
         log::debug!("Handling event: {:?}", &event);
-        let result: Result<_> = try {
+        fn inner(this: &mut App, event: DaemonCommand) -> Result<()> {
             match event {
                 DaemonCommand::NoOp => {}
                 DaemonCommand::OpenInspector => {
@@ -139,19 +139,19 @@ impl App {
                 }
                 DaemonCommand::UpdateVars(mappings) => {
                     for (var_name, new_value) in mappings {
-                        self.update_global_variable(var_name, new_value);
+                        this.update_global_variable(var_name, new_value);
                     }
                 }
                 DaemonCommand::ReloadConfigAndCss(sender) => {
                     let mut errors = Vec::new();
 
-                    let config_result = config::read_from_eww_paths(&self.paths);
-                    if let Err(e) = config_result.and_then(|new_config| self.load_config(new_config)) {
+                    let config_result = config::read_from_eww_paths(&this.paths);
+                    if let Err(e) = config_result.and_then(|new_config| this.load_config(new_config)) {
                         errors.push(e)
                     }
-                    match crate::config::scss::parse_scss_from_file(&self.paths.get_eww_scss_path()) {
+                    match crate::config::scss::parse_scss_from_file(&this.paths.get_eww_scss_path()) {
                         Ok((file_id, css)) => {
-                            if let Err(e) = self.load_css(file_id, &css) {
+                            if let Err(e) = this.load_css(file_id, &css) {
                                 errors.push(anyhow!(e));
                             }
                         }
@@ -164,44 +164,44 @@ impl App {
                 }
                 DaemonCommand::KillServer => {
                     log::info!("Received kill command, stopping server!");
-                    self.stop_application();
+                    this.stop_application();
                 }
                 DaemonCommand::CloseAll => {
                     log::info!("Received close command, closing all windows");
-                    for window_name in self.open_windows.keys().cloned().collect::<Vec<String>>() {
-                        self.close_window(&window_name)?;
+                    for window_name in this.open_windows.keys().cloned().collect::<Vec<String>>() {
+                        this.close_window(&window_name)?;
                     }
                 }
                 DaemonCommand::OpenMany { windows, should_toggle, sender } => {
                     let errors = windows
                         .iter()
                         .map(|w| {
-                            if should_toggle && self.open_windows.contains_key(w) {
-                                self.close_window(w)
+                            if should_toggle && this.open_windows.contains_key(w) {
+                                this.close_window(w)
                             } else {
-                                self.open_window(w, None, None, None, None)
+                                this.open_window(w, None, None, None, None)
                             }
                         })
                         .filter_map(Result::err);
                     sender.respond_with_error_list(errors)?;
                 }
                 DaemonCommand::OpenWindow { window_name, pos, size, anchor, screen: monitor, should_toggle, sender } => {
-                    let is_open = self.open_windows.contains_key(&window_name);
+                    let is_open = this.open_windows.contains_key(&window_name);
                     let result = if !is_open {
-                        self.open_window(&window_name, pos, size, monitor, anchor)
+                        this.open_window(&window_name, pos, size, monitor, anchor)
                     } else if should_toggle {
-                        self.close_window(&window_name)
+                        this.close_window(&window_name)
                     } else {
                         Ok(())
                     };
                     sender.respond_with_result(result)?;
                 }
                 DaemonCommand::CloseWindows { windows, sender } => {
-                    let errors = windows.iter().map(|window| self.close_window(window)).filter_map(Result::err);
+                    let errors = windows.iter().map(|window| this.close_window(window)).filter_map(Result::err);
                     sender.respond_with_error_list(errors)?;
                 }
                 DaemonCommand::PrintState { all, sender } => {
-                    let scope_graph = self.scope_graph.borrow();
+                    let scope_graph = this.scope_graph.borrow();
                     let used_globals_names = scope_graph.currently_used_globals();
                     let output = scope_graph
                         .global_scope()
@@ -213,7 +213,7 @@ impl App {
                     sender.send_success(output)?
                 }
                 DaemonCommand::GetVar { name, sender } => {
-                    let scope_graph = &*self.scope_graph.borrow();
+                    let scope_graph = &*this.scope_graph.borrow();
                     let vars = &scope_graph.global_scope().data;
                     match vars.get(name.as_str()) {
                         Some(x) => sender.send_success(x.to_string())?,
@@ -221,26 +221,27 @@ impl App {
                     }
                 }
                 DaemonCommand::PrintWindows(sender) => {
-                    let output = self
+                    let output = this
                         .eww_config
                         .get_windows()
                         .keys()
                         .map(|window_name| {
-                            let is_open = self.open_windows.contains_key(window_name);
+                            let is_open = this.open_windows.contains_key(window_name);
                             format!("{}{}", if is_open { "*" } else { "" }, window_name)
                         })
                         .join("\n");
                     sender.send_success(output)?
                 }
                 DaemonCommand::PrintDebug(sender) => {
-                    let output = format!("{:#?}", &self);
+                    let output = format!("{:#?}", &this);
                     sender.send_success(output)?
                 }
-                DaemonCommand::PrintGraph(sender) => sender.send_success(self.scope_graph.borrow().visualize())?,
+                DaemonCommand::PrintGraph(sender) => sender.send_success(this.scope_graph.borrow().visualize())?,
             }
-        };
+            Ok(())
+        }
 
-        if let Err(err) = result {
+        if let Err(err) = inner(self, event) {
             error_handling_ctx::print_error(err);
         }
     }
@@ -327,7 +328,7 @@ impl App {
             self.close_window(window_name)?;
         }
 
-        let open_result: Result<_> = try {
+        let open_result: Result<_> = (|| {
             let mut window_def = self.eww_config.get_window(window_name)?.clone();
             assert_eq!(window_def.name, window_name, "window definition name did not equal the called window");
             window_def.geometry = window_def.geometry.map(|x| x.override_if_given(anchor, pos, size));
@@ -379,7 +380,8 @@ impl App {
             }));
 
             self.open_windows.insert(window_name.to_string(), eww_window);
-        };
+            Ok(())
+        })();
 
         if let Err(err) = open_result {
             self.failed_windows.insert(window_name.to_string());
@@ -414,15 +416,15 @@ impl App {
     pub fn load_css(&mut self, file_id: usize, css: &str) -> Result<()> {
         if let Err(err) = self.css_provider.load_from_data(css.as_bytes()) {
             static PATTERN: Lazy<regex::Regex> = Lazy::new(|| regex::Regex::new(r"[^:]*:(\d+):(\d+)(.*)$").unwrap());
-            let nice_error_option: Option<_> = try {
+            let nice_error_option: Option<_> = (|| {
                 let captures = PATTERN.captures(&err.message())?;
                 let line = captures.get(1).unwrap().as_str().parse::<usize>().ok()?;
                 let msg = captures.get(3).unwrap().as_str();
                 let db = error_handling_ctx::FILE_DATABASE.read().ok()?;
                 let line_range = db.line_range(file_id, line - 1).ok()?;
                 let span = Span(line_range.start, line_range.end - 1, file_id);
-                DiagError(gen_diagnostic!(msg, span))
-            };
+                Some(DiagError(gen_diagnostic!(msg, span)))
+            })();
             match nice_error_option {
                 Some(error) => Err(anyhow!(error)),
                 None => Err(anyhow!("CSS error: {}", err.message())),

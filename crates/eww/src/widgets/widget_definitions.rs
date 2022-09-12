@@ -127,7 +127,15 @@ static DEPRECATED_ATTRS: Lazy<HashSet<&str>> =
 /// @desc these properties apply to _all_ widgets, and can be used anywhere!
 pub(super) fn resolve_widget_attrs(bargs: &mut BuilderArgs, gtk_widget: &gtk::Widget) -> Result<()> {
     let deprecated: HashSet<_> = DEPRECATED_ATTRS.to_owned();
-    let contained_deprecated: Vec<_> = bargs.unhandled_attrs.drain_filter(|a, _| deprecated.contains(&a.0 as &str)).collect();
+    let mut contained_deprecated: Vec<_> = vec![];
+    bargs.unhandled_attrs.retain(|a, _| {
+        let res = deprecated.contains(a.0.as_str());
+        if res {
+            contained_deprecated.push(a.clone())
+        }
+        !res
+    });
+
     if !contained_deprecated.is_empty() {
         let diag = error_handling_ctx::stringify_diagnostic(gen_diagnostic! {
             kind =  Severity::Error,
@@ -135,7 +143,7 @@ pub(super) fn resolve_widget_attrs(bargs: &mut BuilderArgs, gtk_widget: &gtk::Wi
             label = bargs.widget_use.span => "Found in here",
             note = format!(
                 "The attribute(s) ({}) has/have been removed, as GTK does not support it consistently. Instead, use eventbox to wrap this widget and set the attribute there. See #251 (https://github.com/elkowar/eww/issues/251) for more details.",
-                contained_deprecated.iter().map(|(x, _)| x).join(", ")
+                contained_deprecated.iter().join(", ")
             ),
         }).unwrap();
         eprintln!("{}", diag);
@@ -143,7 +151,7 @@ pub(super) fn resolve_widget_attrs(bargs: &mut BuilderArgs, gtk_widget: &gtk::Wi
 
     let css_provider = gtk::CssProvider::new();
 
-    let visible_result: Result<_> = try {
+    let visible_result: Result<_> = (|| {
         let visible_expr = bargs.widget_use.attrs.attrs.get("visible").map(|x| x.value.as_simplexpr()).transpose()?;
         if let Some(visible_expr) = visible_expr {
             let visible = bargs.scope_graph.evaluate_simplexpr_in_scope(bargs.calling_scope, &visible_expr)?.as_bool()?;
@@ -155,7 +163,8 @@ pub(super) fn resolve_widget_attrs(bargs: &mut BuilderArgs, gtk_widget: &gtk::Wi
                 }
             });
         }
-    };
+        Ok(())
+    })();
     if let Err(err) = visible_result {
         error_handling_ctx::print_error(err);
     }
@@ -867,7 +876,7 @@ fn build_gtk_literal(bargs: &mut BuilderArgs) -> Result<gtk::Box> {
         prop(content: as_string) {
             gtk_widget.children().iter().for_each(|w| gtk_widget.remove(w));
             if !content.is_empty() {
-                let content_widget_use: DiagResult<_> = try {
+                let content_widget_use: DiagResult<_> = (|| {
                     let ast = {
                         let mut yuck_files = error_handling_ctx::FILE_DATABASE.write().unwrap();
                         let (span, asts) = yuck_files.load_yuck_str("<literal-content>".to_string(), content)?;
@@ -877,8 +886,8 @@ fn build_gtk_literal(bargs: &mut BuilderArgs) -> Result<gtk::Box> {
                         yuck::parser::require_single_toplevel(span, asts)?
                     };
 
-                    yuck::config::widget_use::WidgetUse::from_ast(ast)?
-                };
+                    Ok(yuck::config::widget_use::WidgetUse::from_ast(ast)?)
+                })();
                 let content_widget_use = content_widget_use?;
 
                 // TODO a literal should create a new scope, that I'm not even sure should inherit from root

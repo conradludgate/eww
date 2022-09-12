@@ -169,7 +169,7 @@ impl WidgetImpl for CircProgPriv {
     }
 
     fn draw(&self, widget: &Self::Type, cr: &cairo::Context) -> Inhibit {
-        let res: Result<()> = try {
+        let res: Result<()> = (|| {
             let value = *self.value.borrow();
             let start_at = *self.start_at.borrow() as f64;
             let thickness = *self.thickness.borrow() as f64;
@@ -236,7 +236,8 @@ impl WidgetImpl for CircProgPriv {
                 cr.reset_clip();
                 cr.restore()?;
             }
-        };
+            Ok(())
+        })();
 
         if let Err(error) = res {
             error_handling_ctx::print_error(error)
