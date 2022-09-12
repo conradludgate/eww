@@ -57,14 +57,14 @@ impl Attributes {
     pub fn ast_required<T: FromAst>(&mut self, key: &str) -> Result<T, DiagError> {
         let key = AttrName(key.to_string());
         match self.attrs.remove(&key) {
-            Some(AttrEntry { key_span: _, value }) => T::from_ast(value),
+            Some(AttrEntry { value, .. }) => T::from_ast(value),
             None => Err(AttrError::MissingRequiredAttr(self.span, key.clone()).into()),
         }
     }
 
     pub fn ast_optional<T: FromAst>(&mut self, key: &str) -> Result<Option<T>, DiagError> {
         match self.attrs.remove(&AttrName(key.to_string())) {
-            Some(AttrEntry { key_span: _, value }) => T::from_ast(value).map(Some),
+            Some(AttrEntry { value, .. }) => T::from_ast(value).map(Some),
             None => Ok(None),
         }
     }

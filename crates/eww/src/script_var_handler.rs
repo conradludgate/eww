@@ -234,7 +234,7 @@ impl ListenVarHandler {
 
         let evt_send = self.evt_send.clone();
         tokio::spawn(async move {
-            crate::try_logging_errors_async!(format!("Executing listen var-command {}", &var.command) =>  {
+            crate::try_logging_errors!(format!("Executing listen var-command {}", &var.command) =>  {
                 let mut handle = unsafe {
                     tokio::process::Command::new("sh")
                     .args(&["-c", &var.command])

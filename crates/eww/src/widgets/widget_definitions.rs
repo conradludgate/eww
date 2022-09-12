@@ -894,7 +894,7 @@ fn build_gtk_literal(bargs: &mut BuilderArgs) -> Result<gtk::Box> {
                 let child_widget = build_gtk_widget(scope_graph, widget_defs.clone(), calling_scope, content_widget_use, None)
                     .map_err(|e| {
                         let diagnostic = error_handling_ctx::anyhow_err_to_diagnostic(&e)
-                            .unwrap_or_else(|| gen_diagnostic!(e))
+                            .unwrap_or_else(|| gen_diagnostic!(e.to_string()))
                             .with_label(span_to_secondary_label(literal_use_span).with_message("Error in the literal used here"));
                         DiagError(diagnostic)
                     })?;

@@ -40,8 +40,8 @@ pub fn get_parse_error_span<T, E: Spanned>(file_id: usize, err: &lalrpop_util::P
     use lalrpop_util::ParseError::*;
     match err {
         InvalidToken { location } => Span(*location, *location, file_id),
-        UnrecognizedEOF { location, expected: _ } => Span(*location, *location, file_id),
-        UnrecognizedToken { token, expected: _ } => Span(token.0, token.2, file_id),
+        UnrecognizedEOF { location, .. } => Span(*location, *location, file_id),
+        UnrecognizedToken { token, .. } => Span(token.0, token.2, file_id),
         ExtraToken { token } => Span(token.0, token.2, file_id),
         User { error } => error.span(),
     }

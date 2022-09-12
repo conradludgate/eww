@@ -25,9 +25,9 @@ pub enum AstError {
 impl ToDiagnostic for AstError {
     fn to_diagnostic(&self) -> codespan_reporting::diagnostic::Diagnostic<usize> {
         match self {
-            AstError::NoMoreElementsExpected(span) => gen_diagnostic!(self, span),
+            AstError::NoMoreElementsExpected(span) => gen_diagnostic!(self.to_string(), span),
             AstError::TooFewElements(span) => gen_diagnostic! {
-                msg = self,
+                msg = self.to_string(),
                 label = span => "Expected another element here"
             },
             AstError::WrongExprType(span, expected, actual) => gen_diagnostic! {
@@ -35,8 +35,8 @@ impl ToDiagnostic for AstError {
                 label = span => format!("Expected a `{expected}` here"),
                 note = format!("Expected: {expected}\n     Got: {actual}"),
             },
-            AstError::DanglingKeyword(span, _kw) => gen_diagnostic! {
-                msg = "{kw} is missing a value",
+            AstError::DanglingKeyword(span, kw) => gen_diagnostic! {
+                msg = format!("{kw} is missing a value"),
                 label = span => "No value provided for this",
             },
             AstError::EvalError(e) => e.to_diagnostic(),

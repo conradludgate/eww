@@ -152,7 +152,7 @@ impl Config {
 
     pub fn generate_from_main_file(files: &mut impl YuckFileProvider, path: impl AsRef<Path>) -> DiagResult<Self> {
         let (_span, top_levels) = files.load_yuck_file(path.as_ref().to_path_buf()).map_err(|err| match err {
-            FilesError::IoError(err) => DiagError(gen_diagnostic!(err)),
+            FilesError::IoError(err) => DiagError(gen_diagnostic!(err.to_string())),
             FilesError::DiagError(x) => x,
         })?;
         Self::generate(files, top_levels)
