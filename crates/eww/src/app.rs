@@ -131,7 +131,7 @@ impl App {
     /// Handle a [`DaemonCommand`] event.
     pub fn handle_command(&mut self, event: DaemonCommand) {
         log::debug!("Handling event: {:?}", &event);
-        fn inner(this: &mut App, event: DaemonCommand) -> Result<()> {
+        let res: Result<()> = (|| {
             match event {
                 DaemonCommand::NoOp => {}
                 DaemonCommand::OpenInspector => {
@@ -139,19 +139,19 @@ impl App {
                 }
                 DaemonCommand::UpdateVars(mappings) => {
                     for (var_name, new_value) in mappings {
-                        this.update_global_variable(var_name, new_value);
+                        self.update_global_variable(var_name, new_value);
                     }
                 }
                 DaemonCommand::ReloadConfigAndCss(sender) => {
                     let mut errors = Vec::new();
 
-                    let config_result = config::read_from_eww_paths(&this.paths);
-                    if let Err(e) = config_result.and_then(|new_config| this.load_config(new_config)) {
+                    let config_result = config::read_from_eww_paths(&self.paths);
+                    if let Err(e) = config_result.and_then(|new_config| self.load_config(new_config)) {
                         errors.push(e)
                     }
-                    match crate::config::scss::parse_scss_from_file(&this.paths.get_eww_scss_path()) {
+                    match crate::config::scss::parse_scss_from_file(&self.paths.get_eww_scss_path()) {
                         Ok((file_id, css)) => {
-                            if let Err(e) = this.load_css(file_id, &css) {
+                            if let Err(e) = self.load_css(file_id, &css) {
                                 errors.push(anyhow!(e));
                             }
                         }
@@ -164,44 +164,44 @@ impl App {
                 }
                 DaemonCommand::KillServer => {
                     log::info!("Received kill command, stopping server!");
-                    this.stop_application();
+                    self.stop_application();
                 }
                 DaemonCommand::CloseAll => {
                     log::info!("Received close command, closing all windows");
-                    for window_name in this.open_windows.keys().cloned().collect::<Vec<String>>() {
-                        this.close_window(&window_name)?;
+                    for window_name in self.open_windows.keys().cloned().collect::<Vec<String>>() {
+                        self.close_window(&window_name)?;
                     }
                 }
                 DaemonCommand::OpenMany { windows, should_toggle, sender } => {
                     let errors = windows
                         .iter()
                         .map(|w| {
-                            if should_toggle && this.open_windows.contains_key(w) {
-                                this.close_window(w)
+                            if should_toggle && self.open_windows.contains_key(w) {
+                                self.close_window(w)
                             } else {
-                                this.open_window(w, None, None, None, None)
+                                self.open_window(w, None, None, None, None)
                             }
                         })
                         .filter_map(Result::err);
                     sender.respond_with_error_list(errors)?;
                 }
                 DaemonCommand::OpenWindow { window_name, pos, size, anchor, screen: monitor, should_toggle, sender } => {
-                    let is_open = this.open_windows.contains_key(&window_name);
+                    let is_open = self.open_windows.contains_key(&window_name);
                     let result = if !is_open {
-                        this.open_window(&window_name, pos, size, monitor, anchor)
+                        self.open_window(&window_name, pos, size, monitor, anchor)
                     } else if should_toggle {
-                        this.close_window(&window_name)
+                        self.close_window(&window_name)
                     } else {
                         Ok(())
                     };
                     sender.respond_with_result(result)?;
                 }
                 DaemonCommand::CloseWindows { windows, sender } => {
-                    let errors = windows.iter().map(|window| this.close_window(window)).filter_map(Result::err);
+                    let errors = windows.iter().map(|window| self.close_window(window)).filter_map(Result::err);
                     sender.respond_with_error_list(errors)?;
                 }
                 DaemonCommand::PrintState { all, sender } => {
-                    let scope_graph = this.scope_graph.borrow();
+                    let scope_graph = self.scope_graph.borrow();
                     let used_globals_names = scope_graph.currently_used_globals();
                     let output = scope_graph
                         .global_scope()
@@ -213,7 +213,7 @@ impl App {
                     sender.send_success(output)?
                 }
                 DaemonCommand::GetVar { name, sender } => {
-                    let scope_graph = &*this.scope_graph.borrow();
+                    let scope_graph = &*self.scope_graph.borrow();
                     let vars = &scope_graph.global_scope().data;
                     match vars.get(name.as_str()) {
                         Some(x) => sender.send_success(x.to_string())?,
@@ -221,27 +221,27 @@ impl App {
                     }
                 }
                 DaemonCommand::PrintWindows(sender) => {
-                    let output = this
+                    let output = self
                         .eww_config
                         .get_windows()
                         .keys()
                         .map(|window_name| {
-                            let is_open = this.open_windows.contains_key(window_name);
+                            let is_open = self.open_windows.contains_key(window_name);
                             format!("{}{}", if is_open { "*" } else { "" }, window_name)
                         })
                         .join("\n");
                     sender.send_success(output)?
                 }
                 DaemonCommand::PrintDebug(sender) => {
-                    let output = format!("{:#?}", &this);
+                    let output = format!("{:#?}", &self);
                     sender.send_success(output)?
                 }
-                DaemonCommand::PrintGraph(sender) => sender.send_success(this.scope_graph.borrow().visualize())?,
+                DaemonCommand::PrintGraph(sender) => sender.send_success(self.scope_graph.borrow().visualize())?,
             }
             Ok(())
-        }
+        })();
 
-        if let Err(err) = inner(self, event) {
+        if let Err(err) = res {
             error_handling_ctx::print_error(err);
         }
     }
