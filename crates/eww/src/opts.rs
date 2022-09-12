@@ -14,7 +14,7 @@ use crate::{
 };
 
 /// Struct that gets generated from `RawOpt`.
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Opt {
     pub log_debug: bool,
     pub show_logs: bool,
@@ -24,7 +24,7 @@ pub struct Opt {
     pub no_daemonize: bool,
 }
 
-#[derive(Parser, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Parser, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[clap(author = "ElKowar")]
 #[clap(version, about)]
 struct RawOpt {
@@ -52,7 +52,7 @@ struct RawOpt {
     action: Action,
 }
 
-#[derive(Subcommand, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Subcommand, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub enum Action {
     /// Start the Eww daemon.
     #[clap(name = "daemon", alias = "d")]
@@ -65,14 +65,14 @@ pub enum Action {
     WithServer(ActionWithServer),
 }
 
-#[derive(Subcommand, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Subcommand, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub enum ActionClientOnly {
     /// Print and watch the eww logs
     #[clap(name = "logs")]
     Logs,
 }
 
-#[derive(Subcommand, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Subcommand, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub enum ActionWithServer {
     /// Ping the eww server, checking if it is reachable.
     #[clap(name = "ping")]

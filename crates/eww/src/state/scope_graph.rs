@@ -545,12 +545,15 @@ mod internal {
         }
 
         pub fn visualize(&self) -> String {
+            use std::fmt::Write;
+
             let mut output = String::new();
             output.push_str("digraph {\n");
 
             for (scope_index, scope) in &self.scopes {
-                output.push_str(&format!(
-                    "  \"{:?}\"[label=\"{}\\n{}\"]\n",
+                writeln!(
+                    &mut output,
+                    "  \"{:?}\"[label=\"{}\\n{}\"]",
                     scope_index,
                     scope.name,
                     format!(
@@ -568,30 +571,35 @@ mod internal {
                             ))
                             .collect::<Vec<_>>()
                     )
-                    .replace("\"", "'")
-                ));
+                    .replace('\"', "'")
+                )
+                .unwrap();
                 if let Some(created_by) = scope.ancestor {
-                    output.push_str(&format!("  \"{:?}\" -> \"{:?}\"[label=\"ancestor\"]\n", created_by, scope_index));
+                    writeln!(&mut output, "  \"{:?}\" -> \"{:?}\"[label=\"ancestor\"]", created_by, scope_index).unwrap();
                 }
             }
 
             for (child, (parent, edges)) in &self.hierarchy_relations.child_to_parent {
                 for edge in edges {
-                    output.push_str(&format!(
-                        "  \"{:?}\" -> \"{:?}\" [color = \"red\", label = \"{}\"]\n",
+                    writeln!(
+                        &mut output,
+                        "  \"{:?}\" -> \"{:?}\" [color = \"red\", label = \"{}\"]",
                         parent,
                         child,
-                        format!(":{} `{:?}`", edge.attr_name, edge.expression).replace("\"", "'")
-                    ));
+                        format!(":{} `{:?}`", edge.attr_name, edge.expression).replace('\"', "'")
+                    )
+                    .unwrap();
                 }
             }
             for (child, (parent, edge)) in &self.inheritance_relations.child_to_parent {
-                output.push_str(&format!(
-                    "  \"{:?}\" -> \"{:?}\" [color = \"blue\", label = \"{}\"]\n",
+                writeln!(
+                    &mut output,
+                    "  \"{:?}\" -> \"{:?}\" [color = \"blue\", label = \"{}\"]",
                     child,
                     parent,
-                    format!("inherits({:?})", edge.references).replace("\"", "'")
-                ));
+                    format!("inherits({:?})", edge.references).replace('\"', "'")
+                )
+                .unwrap();
             }
 
             output.push('}');

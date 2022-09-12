@@ -60,7 +60,7 @@ pub fn get_temperatures() -> String {
         "{{ {} }}",
         c.components()
             .iter()
-            .map(|c| format!(r#""{}": {}"#, c.label().to_uppercase().replace(" ", "_"), c.temperature()))
+            .map(|c| format!(r#""{}": {}"#, c.label().to_uppercase().replace(' ', "_"), c.temperature()))
             .join(",")
     )
 }
@@ -105,6 +105,8 @@ pub fn get_battery_capacity() -> Result<String> {
 
 #[cfg(target_os = "linux")]
 pub fn get_battery_capacity() -> Result<String> {
+    use std::fmt::Write;
+
     let mut current = 0_f64;
     let mut total = 0_f64;
     let mut json = String::from('{');
@@ -115,12 +117,14 @@ pub fn get_battery_capacity() -> Result<String> {
         if i.is_dir() {
             // some ugly hack because if let Some(a) = a && Some(b) = b doesn't work yet
             if let (Ok(o), Ok(s)) = (read_to_string(i.join("capacity")), read_to_string(i.join("status"))) {
-                json.push_str(&format!(
+                write!(
+                    &mut json,
                     r#"{:?}: {{ "status": "{}", "capacity": {} }},"#,
                     i.file_name().context("couldn't convert file name to rust string")?,
                     s.trim_end_matches(|c| c == '\n'),
                     o.trim_end_matches(|c| c == '\n')
-                ));
+                )
+                .unwrap();
                 if let (Ok(t), Ok(c), Ok(v)) = (
                     read_to_string(i.join("charge_full")),
                     read_to_string(i.join("charge_now")),
@@ -149,7 +153,7 @@ pub fn get_battery_capacity() -> Result<String> {
         return Ok(String::from(""));
     }
 
-    json.push_str(&format!(r#" "total_avg": {:.1}}}"#, (current / total) * 100_f64));
+    write!(&mut json, r#" "total_avg": {:.1}}}"#, (current / total) * 100_f64).unwrap();
     Ok(json)
 }
 

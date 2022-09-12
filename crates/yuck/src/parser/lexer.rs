@@ -53,8 +53,6 @@ macro_rules! regex_rules {
     }
 }
 
-static ESCAPE_REPLACE_REGEX: Lazy<regex::Regex> = Lazy::new(|| Regex::new(r"\\(.)").unwrap());
-
 regex_rules! {
     r"\(" => |_| Token::LPren,
     r"\)" => |_| Token::RPren,
@@ -99,7 +97,7 @@ impl Lexer {
         self.pos += 1;
         let mut simplexpr_lexer = simplexpr_lexer::Lexer::new(self.file_id, self.pos, &self.source[self.pos..]);
         let mut toks: Vec<(usize, _, usize)> = Vec::new();
-        let mut end = self.pos;
+        let mut end;
         let mut curly_nesting = 0;
         loop {
             match simplexpr_lexer.next_token()? {

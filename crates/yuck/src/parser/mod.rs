@@ -47,21 +47,21 @@ pub fn require_single_toplevel(span: Span, mut asts: Vec<Ast>) -> DiagResult<Ast
     }
 }
 
-macro_rules! test_parser {
-    ($($text:literal),*) => {{
-        let p = parser::AstParser::new();
-        use lexer::Lexer;
-
-        ::insta::with_settings!({sort_maps => true}, {
-            $(
-                ::insta::assert_debug_snapshot!(p.parse(0, Lexer::new(0, $text.to_string())));
-            )*
-        });
-    }}
-}
-
 #[test]
 fn test() {
+    macro_rules! test_parser {
+        ($($text:literal),*) => {{
+            let p = parser::AstParser::new();
+            use lexer::Lexer;
+
+            ::insta::with_settings!({sort_maps => true}, {
+                $(
+                    ::insta::assert_debug_snapshot!(p.parse(0, Lexer::new(0, $text.to_string())));
+                )*
+            });
+        }}
+    }
+
     test_parser!(
         "1",
         "(12)",

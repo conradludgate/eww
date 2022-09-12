@@ -270,7 +270,7 @@ impl App {
     /// Thus, when a variable changes, the run-while conditions of all variables
     /// that mention the changed variable need to be reevaluated and reapplied.
     fn apply_run_while_expressions_mentioning(&mut self, name: &VarName) {
-        let mentioning_vars = match self.eww_config.get_run_while_mentions_of(&name) {
+        let mentioning_vars = match self.eww_config.get_run_while_mentions_of(name) {
             Some(x) => x,
             None => return,
         };
@@ -350,10 +350,10 @@ impl App {
                 None,
             )?;
 
-            let monitor_geometry = get_monitor_geometry(monitor.or(window_def.monitor.clone()))?;
+            let monitor_geometry = get_monitor_geometry(monitor.or_else(|| window_def.monitor.clone()))?;
 
             let mut eww_window = initialize_window(monitor_geometry, root_widget, window_def, window_scope)?;
-            eww_window.gtk_window.style_context().add_class(&window_name.to_string());
+            eww_window.gtk_window.style_context().add_class(window_name);
 
             // initialize script var handlers for variables. As starting a scriptvar with the script_var_handler is idempodent,
             // we can just start script vars that are already running without causing issues
@@ -417,7 +417,7 @@ impl App {
         if let Err(err) = self.css_provider.load_from_data(css.as_bytes()) {
             static PATTERN: Lazy<regex::Regex> = Lazy::new(|| regex::Regex::new(r"[^:]*:(\d+):(\d+)(.*)$").unwrap());
             let nice_error_option: Option<_> = (|| {
-                let captures = PATTERN.captures(&err.message())?;
+                let captures = PATTERN.captures(err.message())?;
                 let line = captures.get(1).unwrap().as_str().parse::<usize>().ok()?;
                 let msg = captures.get(3).unwrap().as_str();
                 let db = error_handling_ctx::FILE_DATABASE.read().ok()?;
@@ -481,7 +481,7 @@ fn initialize_window(
 
     window.show_all();
 
-    Ok(EwwWindow { name: window_def.name.clone(), gtk_window: window, scope_index: window_scope, destroy_event_handler_id: None })
+    Ok(EwwWindow { name: window_def.name, gtk_window: window, scope_index: window_scope, destroy_event_handler_id: None })
 }
 
 /// Apply the provided window-positioning rules to the window.
@@ -570,7 +570,7 @@ pub fn get_monitor_from_display(display: &gdk::Display, identifier: &MonitorIden
             }
         }
     }
-    return None;
+    None
 }
 
 pub fn get_window_rectangle(geometry: WindowGeometry, screen_rect: gdk::Rectangle) -> gdk::Rectangle {
